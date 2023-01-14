@@ -1,0 +1,1034 @@
+# This scene does the core play in the Math World Game
+
+extends Control
+
+var avBlockShapes = [
+	[ Vector2(0,0)], # 1
+	[ Vector2(0,0)],
+	[ Vector2(0,0)],
+	[ Vector2(0,0)],
+	[ Vector2(0,0)],
+	[ Vector2(0,0)],
+	[ Vector2(0,0)],
+	[ Vector2(0,0)],
+	[ Vector2(0,0)],
+	[ Vector2(0,0)], # 10
+	[ Vector2(0,0)],
+	[ Vector2(0,0)], # 12
+	[ Vector2(0,0), Vector2(1,0)],
+	[ Vector2(0,0), Vector2(1,0)],
+	[ Vector2(0,0), Vector2(1,0)],
+	[ Vector2(0,0), Vector2(1,0)], # 16
+	[ Vector2(0,0), Vector2(1,0), Vector2(2,0)], # 18
+	[ Vector2(0,0), Vector2(0,1), Vector2(0,2),Vector2(1,2)],
+	[ Vector2(0,0), Vector2(0,1), Vector2(1,1),Vector2(1,2)]] # 20
+var amvBlockRotations = [
+	Matrix32(Vector2(1, 0), Vector2(0, 1), Vector2()),
+	Matrix32(Vector2(0, 1), Vector2(-1, 0), Vector2()),
+	Matrix32(Vector2(-1, 0), Vector2(0, -1), Vector2()),
+	Matrix32(Vector2(0, -1), Vector2(1, 0), Vector2())]
+var bHit = false
+var bPieceActive = false
+var bOnPause = false
+var btLanguage = null
+var dCellsMap = {}
+var dIni = {}
+var dResult = {}
+var iWidth = 0
+var iHeight = 0
+var iMaxIdxMathSet = 16
+var iEndIdxNumberInMathSet = 14
+var iMaxShapes = 16
+var iPieceShape = 0
+var iPieceRotate = 0
+var iScore = 100
+var iStage = 1
+var lbScore = null
+var lbStage = null
+var lbWow = null
+var oUnitaryBlock = preload("./assets/ret100px.png")
+var sBlockMath = ''
+var sMathSet = '0123456789'+'1123=+-*()'
+var vPiecePosition = Vector2()
+var vBlockColors = []
+var vUnitSize = Vector2()
+var vOrigin = Vector2()
+var vDispl = Vector2(1,0)
+var vStartPos = Vector2()
+var timer 
+
+
+
+# functions sorted alphabetically ignoring the return prefix except alghoritms
+
+# nexts:
+	# versão 0.4:
+	# replace sMathSet by sNumberSet and sOperatorSet both fill by steps, then eliminate iMax an iEnd,
+	# alter the password of the dropbox
+	# gerar dicIni aleatoriamente/direcionado
+	# ORGANIZAR DIRETÓRIOS INCLUSIVE ASSETS_PT
+	# continue the refactoring
+	# balanceamento via user e via software
+	# Botão com opção de eliminar apenas as peças da equação e mover somente as superiores da respectiva coluna/linha
+	# verificar checkHit em diante, pode haver recorrências desnecessárias, talvez, em validação strings
+	# montar fases.
+	# tem que ser um jogo muito mais ágil!!!!!!!
+	# embelezar, ins logo
+	# reforçar checklook com arquivo interno de última data, ou algo assim.
+
+# Bugs:
+
+	# pause if the move down is pressed on first click in cellMap(0,0)
+
+
+
+
+# check the cell position in dCellsMap, if !='$" (empaty) or do not fit return false
+func bCheckFit(vOffSet, iExtraRotate = 0):
+	var i = -1
+	for vc2Cell in avBlockShapes[iPieceShape]:
+		i += 1
+		# pos is set with vc2Cell in avBlockShapes[iPieceShape] in vPiecePosition
+		# transformed by matrix of rotation + vOffSet
+		var cellPos = vXformTransform(vc2Cell, iExtraRotate) + vOffSet
+		if (cellPos.x < 0):
+			return false
+		if (cellPos.y < 0):
+			return false
+		if (cellPos.x >= iWidth):
+			return false
+		if (cellPos.y >= iHeight):
+			return false
+		if ( dCellsMap[cellPos] == '>' ):
+			sBlockMath[i] = sAdd(sBlockMath[i], true)
+		if ( dCellsMap[cellPos] == '<' ):
+			sBlockMath[i] = sAdd(sBlockMath[i], false)
+		if ( dCellsMap[cellPos] == '=' and cellPos.y == 1 ):
+			sBlockMath[i] = '='
+			return true
+		if ( dCellsMap[cellPos] == '+' and cellPos.y == 1 ):
+			sBlockMath[i] = '+'
+			return true
+		if ( dCellsMap[cellPos] == '-' and cellPos.y == 1 ):
+			sBlockMath[i] = '-'
+			return true
+		if ( dCellsMap[cellPos] == '*' and cellPos.y == 1 ):
+			sBlockMath[i] = '*'
+			return true
+		if ( dCellsMap[cellPos] == '(' and cellPos.y == 1 ):
+			sBlockMath[i] = '('
+			return true
+		if ( dCellsMap[cellPos] == ')' and cellPos.y == 1 ):
+			sBlockMath[i] = ')'
+			return true
+		if ( dCellsMap[cellPos] != '$' and dCellsMap[cellPos] != '>' and dCellsMap[cellPos] != '<' ):			
+			return false
+	return true
+
+# change to the next or previous character
+func sAdd(char, bAddIt ):
+	var n = 0
+	if ( bAddIt ):
+		if ( char == '+' ) :
+			return '-'
+		if ( char == '-' ) :
+			return '+'
+		if ( char == '=' ) :
+			return '9'
+		if ( char.is_valid_integer() ):
+			n = int(char) + 1
+			if ( n > 9 ) :
+				return '0'
+			else:
+				return str(n)
+		else:
+			return char
+	else:
+		if ( char == '-' ) :
+			return '+'
+		if ( char == '+' ) :
+			return '-'
+		if ( char == '=' ) :
+			return '1'
+		if ( char.is_valid_integer() ):
+			n = int(char) - 1
+			if ( n < 0 ) :
+				return '9'
+			else:
+				return str(n)
+		else:
+			return char
+
+####	call sceneClass with respective notification (sceneclass is the scene learning )
+# lock the program in a fixed date
+func chkLock():
+	var aux = OS.get_datetime()
+	if ( aux['month'] <= 9 and aux['year'] == 2016):
+		return(true)
+	else:
+		get_node("../btRestart").set_hidden(true)
+		var textBbcode = 'Sorry...\n\nThis game has expired\n\nDownload it again at\n\nwww.edu4u.com.br'
+		get_node("../RichTextLabel").set_bbcode(textBbcode)
+		return(false)
+
+# Just delete the column 'columnToDel'
+func delColumn(columnToDel):
+	var t = timer.get_wait_time()
+	var x = -columnToDel-1
+	var aux = [ 'GREET_1', 'GREET_2', 'GREET_3' ]
+	lbWow.set_pos(vOrigin + Vector2(vUnitSize.x, iHeight*vUnitSize.y/2 + vUnitSize.y) )
+	lbWow.set_text( tr(aux[randi() % aux.size()] ))
+	lbWow.set_hidden( false )
+	for y in range(2,iHeight):		
+		timer.set_wait_time(0.25)
+		timer.disconnect("timeout",self,"pieceMoveDown")
+		if ( ! (dCellsMap[Vector2(x,y)] == ' ' or dCellsMap[Vector2(x,y)] == '$' or\
+				 dCellsMap[Vector2(x,y)] == '>' or dCellsMap[Vector2(x,y)] == '<' ) ):			
+			yield(timer,"timeout")
+			if( lbWow.is_hidden() ):
+				lbWow.set_hidden( false )
+			else:
+				lbWow.set_hidden( true )
+			explode(Vector2(x,y), 25)
+			dCellsMap[Vector2(x,y)] = '$'
+			update()
+	timer.set_wait_time(t)
+	timer.connect( "timeout",self,"pieceMoveDown", [true] )
+	lbWow.set_hidden( true )
+
+
+# delete line 'line' and move all lines above to down
+# the rows to be deleted must be called from the beginning to the end
+func delLine(line):
+	var t = timer.get_wait_time()
+	var aux = [ 'GREET_1', 'GREET_2', 'GREET_3' ]
+	lbWow.set_pos(vOrigin + Vector2(vUnitSize.x, iHeight*vUnitSize.y/2 + vUnitSize.y) )
+	lbWow.set_text( aux[randi() % aux.size()] )
+	timer.set_wait_time(0.25)
+	for y in range(int(line),2,-1):
+		lbWow.set_hidden( true )
+		yield(timer,"timeout")
+		update()
+		for x in range(iWidth):
+			timer.disconnect("timeout",self,"pieceMoveDown")
+			timer.set_wait_time(0.25)
+			if ( y == line and dCellsMap[Vector2(x,y)] != ' ' and dCellsMap[Vector2(x,y)] != '$'):
+				yield(timer,"timeout")
+				if( lbWow.is_hidden() ):
+					lbWow.set_hidden( false )
+				else:
+					lbWow.set_hidden( true )
+				explode(Vector2(x,y), 25)
+			if(y > 2):
+				# if cell(x,y) is not tile map ' ' put '$''
+				if ( ! (dCellsMap[Vector2(x,y)] == ' ' or dCellsMap[Vector2(x,y)] == '>' or\
+				 								dCellsMap[Vector2(x,y)] == '<' )): 
+					dCellsMap[Vector2(x,y)] = '$'
+					# if cell(x,y-1) is not a tile map ' ' move it down to cell(x,y) 
+					if ( ! ( dCellsMap[Vector2(x,y-1)] == ' ' or dCellsMap[Vector2(x,y-1)] == '>' or\
+				 								dCellsMap[Vector2(x,y-1)] == '<' ) ):  
+						dCellsMap[Vector2(x,y)] = dCellsMap[Vector2(x,y-1)]
+						dCellsMap[Vector2(x,y-1)] = '$'
+			# when y is 0, just delete its content except tile map with ' '
+			elif(y == 2 and dCellsMap[Vector2(x,y)] != ' '):
+				dCellsMap[Vector2(x,y)] = '$'
+			update()
+	timer.set_wait_time(t)
+	timer.connect( "timeout",self,"pieceMoveDown", [true] )
+	lbWow.set_hidden( true )
+
+func _draw():
+	# draw the dCellsMap dictionary
+	var charPos = Vector2(vUnitSize.x * 0.375, vUnitSize.y * 0.625)
+	for y in range(iHeight):
+		for x in range(iWidth):
+			if (dCellsMap[Vector2(x, y)] != '$'):
+				if( y > 1 ):
+					draw_texture_rect(oUnitaryBlock, Rect2(Vector2(x, y)*vUnitSize + vOrigin,\
+						vUnitSize), false, getColor(dCellsMap[Vector2(x, y)],false))
+					draw_string(preload("../assets/titilliumRegular18.fnt"),\
+						Vector2(x*vUnitSize.x + charPos.x + vOrigin.x, y*vUnitSize.y + charPos.y + vOrigin.y),\
+						str(dCellsMap[Vector2(x, y)]), Color(0,0,0) )
+				else:
+					draw_texture_rect(oUnitaryBlock, Rect2(Vector2(x, y)*vUnitSize + vOrigin,\
+						vUnitSize), false, Color(1,1,0.5,0.3))
+					draw_string(preload("../assets/titilliumRegular18.fnt"),\
+						Vector2(x*vUnitSize.x + charPos.x + vOrigin.x, y*vUnitSize.y + charPos.y + vOrigin.y),\
+						str(dCellsMap[Vector2(x, y)]), Color(1,1,0) )
+					
+			elif( y>-1 ):
+				draw_texture_rect(oUnitaryBlock, Rect2(Vector2(x, y)*vUnitSize + vOrigin,\
+					vUnitSize), false, Color(.5,1,1,0.3))
+	if (bHit):
+		for av in dResult.values():
+			for v in av:
+				draw_texture_rect(oUnitaryBlock, Rect2(v*vUnitSize + vOrigin,\
+					vUnitSize), false, Color(1,1,1,1))
+				draw_string(preload("../assets/titilliumRegular18.fnt"),\
+					Vector2((v.x * vUnitSize.x )+ charPos.x + vOrigin.x, (v.y * vUnitSize.y) + charPos.y + vOrigin.y),\
+					str(dCellsMap[v]), Color(1,0,0,1) )
+	# draw the active piece
+	if (bPieceActive):
+		var i = 0
+		for c in avBlockShapes[iPieceShape]:
+			draw_texture_rect(oUnitaryBlock, Rect2(vXformTransform(c)*vUnitSize + vOrigin,\
+			     vUnitSize), false, getColor(sBlockMath[i], true) )		 # vBlockColors[i]
+			draw_string(preload("../assets/titilliumRegular18.fnt"),\
+				vXformTransform(c)*vUnitSize+Vector2(charPos.x + vOrigin.x,\
+				charPos.y + vOrigin.y), sBlockMath[i], Color(0,0,0))
+#			draw_string(preload("../assets/titilliumRegular18.fnt"),\
+#				vXformTransform(c)*vUnitSize+Vector2(vUnitSize.x-18 + vOrigin.x,\
+#				vUnitSize.y-12 + vOrigin.y), sBlockMath[i], Color(0,0,0))
+			i+=1
+
+func explode( vPos, iPts, color = Color(1,1,1) ):	
+	vPos = ( vPos * vUnitSize ) + vUnitSize/2 + vOrigin
+	get_node("particles").set_pos(vPos)
+	get_node("particles").set_color( color )
+	get_node("particles").set_emitting(true)
+	get_node("particles").set_emit_timeout(0.2)
+	get_node("sounds").play("sound_explode")
+	iScore += iPts
+	lbScore.set_text(tr("SCORE") + str(iScore) + ' / 1000')
+	# send congratulations
+#	if( iPts > 0):
+#		var aux = ['W O W !', 'G R E A T !', 'G O O D !']
+#		var n = 10
+#		var t = timer.get_wait_time()
+#		lbWow.set_size( Vector2(50,20) )
+#		lbWow.set_pos( get_size() / 2 )
+#		lbWow.set_text( aux[randi() % aux.size()] )
+#		lbWow.set_scale( Vector2(1,1) )
+#		lbWow.set_hidden( false )
+#		timer.set_wait_time(0.02)
+#		for k in range (n):
+#			yield(timer,"timeout")
+#			lbWow.set_scale(Vector2(1+k/10.0,1+k/10.0) )			
+#			update()
+#		lbWow.set_scale( Vector2(1,1) )
+#		lbWow.set_hidden( true )
+#		timer.set_wait_time(t)
+
+
+func gameOver():
+	bPieceActive = false
+	get_node("AcceptDialog").set_text("Game Over!")
+	get_node("AcceptDialog").set_pos(Vector2(iWidth/2,iHeight/2))
+	get_node("AcceptDialog").set_hidden(false)
+#	dCellsMap.clear()
+#	update()
+
+####### redo it after put multiple stages
+# return char from sMathSet with adequate balance
+func getCharFromMathSet(idxElemBlock, strBlkMath):	
+	var countNumbers = 0
+	var countOperators = 0
+	var countEquals = 0
+	var countSpaces = 0
+	var sizeOfCellsMap =0
+	var j = randi() % iMaxIdxMathSet
+	var aux = sMathSet[j]
+	var strAux = aux + strBlkMath
+	for y in range(2,iHeight):
+		for x in range(iWidth):
+			if( dCellsMap[Vector2(x, y)] != '$'):
+				if ( dCellsMap[Vector2(x,y)] == '+' or dCellsMap[Vector2(x,y)] == '-'):
+					countOperators +=1
+				elif ( dCellsMap[Vector2(x,y)] == '='):
+					countEquals +=1
+				elif ( dCellsMap[Vector2(x,y)] == ' '):
+					countSpaces +=1
+				else:
+					countNumbers +=1
+	# size of dCellsMap excuding the space cells
+	sizeOfCellsMap = countEquals+countOperators+countNumbers
+	if (sizeOfCellsMap):
+		pass
+					#		print('dCellsMapSizeMinusSpaces = ',sizeOfCellsMap,' Spaces: ',countSpaces)
+					#		print('Operators :','%2d' % (100*countOperators/sizeOfCellsMap),' % (',countOperators,') ',\
+					#			' Equals: ','%2d' % (100*countEquals/sizeOfCellsMap),' % (',countEquals,') ',' Numbers: ','%2d' % (100*countNumbers/sizeOfCellsMap),' % (',countNumbers,') ' )
+					# if char in a  block is a symbol then the others chars are numbers
+					#	if (j > iEndIdxNumberInMathSet):
+					#		if ( idxElemBlock ):
+					#			var j = randi() % iEndIdxNumberInMathSet
+					#			aux = sMathSet[j]
+					#			strAux[0] = aux
+						# Don't repeat the last char
+					#		if ( idxElemBlock ):
+					#			if ( strAux[idxElemBlock] == strAux[idxElemBlock-1]):
+					#				if (strAux[idxElemBlock] == '0'):
+					#					strAux[idxElemBlock] = sMathSet[j+1]
+					#				else:
+					#					strAux[idxElemBlock] = sMathSet[j-1]
+#	# Balances the components of dCellsMap when dCellsMap is greater then 8
+	if ( sizeOfCellsMap > 4 ):
+		#  keeps operators >= 20%
+		if ( 100*countOperators/sizeOfCellsMap < 20 ):
+			if ( randi() % 2 ):
+				aux = '+'
+			else:
+				aux = '-'
+		# keeps equals >= 10% 
+		if (100*countEquals/sizeOfCellsMap < 10):
+			aux = '='
+		# keeps  numbers >= 50% 
+		if (100*countNumbers/sizeOfCellsMap < 50):
+			aux = sMathSet[randi() % iEndIdxNumberInMathSet]
+	return aux
+
+func getColor(char, isActive):	# ok
+	var a=0.8
+	if(isActive):
+		a=1
+	var colors = [
+	[0.6,1.0,0.9,a],
+	[0.7,1.0,0.8,a],
+	[0.8,1.0,0.7,a],
+	[0.9,1.0,0.8,a],
+	[0.8,1.0,0.9,a],
+	[0.7,1.0,1.0,a],
+	[0.8,0.9,1.0,a],
+	[0.9,0.8,1.0,a],
+	[1.0,0.7,1.0,a],
+	[1.0,0.6,1.0,a],
+	]
+	if( char == '='):
+		return Color(1,1,1,a)
+	elif( char == '+'):
+		return Color(0,1,0.3,a)
+	elif( char == '-'):
+		return Color(0.4,1,0.3,a)
+	elif( char == ' ' ):
+		return Color(1,1,1,0)
+	elif ( char == '<' ):
+		return Color(.5,1,1,0.3)
+#		return Color(1,.1,0,a)
+	elif ( char == '>' ):
+		return Color(.5,1,1,0.3)
+#		return Color(1,1,0,a)
+	elif( char.is_valid_integer()):
+		return Color(colors[int(char)][0],colors[int(char)][1],colors[int(char)][2],colors[0][3])
+	else:
+		return Color(0.9,0.9,0.9,a)
+		
+func _input(ie):
+	if (not bPieceActive):
+		return
+	if (!ie.is_pressed()):
+		return
+	if (ie.is_action("moveLeft") and vPiecePosition.y != 1):
+		if (bCheckFit(Vector2(-1, 0))):
+			vPiecePosition.x -= 1
+			vDispl = Vector2(-1,0)
+			update()
+	elif (ie.is_action("moveRight") and vPiecePosition.y != 1):
+		if (bCheckFit(Vector2(1, 0))):
+			vPiecePosition.x += 1
+			vDispl = Vector2(1,0)
+			update()
+	elif (ie.is_action("moveDown")  ):
+		pieceMoveDown(false)
+	elif (ie.is_action("rotate") and vPiecePosition.y > 1):
+		pieceRotate()
+	elif (ie.is_action("explode")):
+		pieceExplode()
+	elif (ie.is_action("fallOrNot")):
+		_on_btPause_pressed()
+
+func newPiece():
+	iPieceShape = randi() % iMaxShapes
+	sBlockMath = ''
+	vBlockColors.clear()
+	for i in range(avBlockShapes[iPieceShape].size()):
+#		sBlockMath += sMathSet[randi() % iMaxIdxMathSet]
+		sBlockMath += getCharFromMathSet(i, sBlockMath)  
+		vBlockColors.append(getColor(sBlockMath[i],true))
+	vPiecePosition = Vector2(0, 0)
+	bPieceActive = true
+	vDispl = Vector2(1,0)
+	iPieceRotate = 0	
+	if (! bCheckFit(Vector2())):
+		gameOver()
+	update()
+
+func _on_btPause_pressed():
+	if(bOnPause):
+		bOnPause = false
+		get_node("../btPause").set_text(tr("PAUSE"))
+		timer.start()
+		get_node("../RichTextLabel").set_bbcode("")
+	else:
+		bOnPause = true
+		get_node("../btPause").set_text(tr("MOVE"))
+		timer.stop()
+		
+func _on_btLanguage_item_selected( ID ):
+	if( ID == 0 ):
+		TranslationServer.set_locale("en")
+	elif ( ID == 1 ):
+		TranslationServer.set_locale("pt")
+	else:
+		TranslationServer.set_locale("en")
+
+func _on_btRestart_pressed():
+	var comm = get_node("../commands")
+	var next = get_node("../btNext")
+	var prev = get_node("../btPrev") 
+	var pause = get_node("../btPause")
+	setupStage()
+#	update()
+	if( ! comm.is_hidden() ):
+		pause.set_hidden(false)
+		pause.set_opacity(0)
+		self.set_opacity(0)
+		timer.set_wait_time(0.1)
+		for i in range(100,0,-5):
+			yield( timer, "timeout" )
+			comm.set_opacity(i/100.0)
+			next.set_opacity(i/100.0)
+			prev.set_opacity(i/100.0)
+			btLanguage.set_opacity(i/100.0)
+			lbStage.set_opacity(i/100.0)
+			self.set_opacity(1-i/100.0)
+			pause.set_opacity(1-i/100.0)
+			update()
+	#		comm.set_size( Vector2(i*3,i*3) )
+		comm.set_hidden(true)
+		btLanguage.set_hidden( true )
+#	get_node("../commands").set_hidden(true)
+	iScore = 100
+	lbScore.set_text(tr("SCORE") + str(iScore) + ' / 1000')
+#	setupStage()
+	bPieceActive = true
+	bOnPause = true
+	_on_btPause_pressed()
+	get_node("../btRestart").release_focus()
+	get_node("../btRestart").set_text(tr("RESTART"))
+	get_node("../RichTextLabel").set_bbcode('')	
+	newPiece()
+
+func pieceExplode():
+	if ( ! bPieceActive):
+		return
+	var t = timer.get_wait_time()
+	timer.set_wait_time(0.25)
+	for c in avBlockShapes[iPieceShape]:
+		explode( vXformTransform(c), -10, Color(1,0,0) )		
+		yield(timer,"timeout")
+	timer.set_wait_time(t)
+	newPiece()
+
+func pieceMoveDown(isFromClock):
+	if( isFromClock ):
+		var c = 0
+		var line_1 = 0
+		# count numbers of cells that exists on cellsMap
+		for x in range(iWidth):
+			if( dCellsMap[Vector2(x,1)] != '$' and  dCellsMap[Vector2(x,1)] != ' ' ):
+				line_1 +=1
+		if( line_1 > 2 ):
+			line_1 -= 2
+		else:
+			line_1 = 0
+		for y in range(2,iHeight):
+			for x in range(iWidth):
+				if( dCellsMap[Vector2(x,y)] != '$' and  dCellsMap[Vector2(x,y)] != ' '):
+					c += 1
+		if( c == 0 and iWidth != 0 and iHeight != 0 ):
+			# if dCellsMap is empty fill 8% randomly with numbers
+			for n in range(iWidth*iHeight/12):
+				dCellsMap[Vector2(randi()%iWidth, 3+randi()%(iHeight-3))] = sMathSet[randi()%iMaxIdxMathSet]
+			# if dCellsMap is empty fill with plus more one of operators
+			for k in range( line_1 ):
+				var v = Vector2(randi() % iWidth, 3+randi() %( iHeight-3))
+				if( v == Vector2(iWidth,iHeight) or v == Vector2(0,iHeight) ):
+					v.y -= 1					
+				dCellsMap[v] = sMathSet[iEndIdxNumberInMathSet + k ]
+#				print( 'op: ', sMathSet[iEndIdxNumberInMathSet + line_1], ' line_1: ', line_1 )
+			update()
+	var aux 
+	if ( ! bPieceActive):
+		return
+	timer.set_wait_time(0.75)
+	# use the horizontal displacement for, maybe,  iStage > 2, for example
+	if ( vPiecePosition.y == 0 and isFromClock and iStage == 1  ): # iStage prv value		
+#		update()
+		yield(timer,"timeout")
+#		print( bCheckFit(vDispl) )
+		if( bCheckFit(vDispl) ):
+			vPiecePosition += vDispl
+		else:
+			if( vDispl.x == 1 ):
+				vDispl.x = -1
+			else:
+				vDispl.x = 1
+#			bCheckFit(vDispl)
+			vPiecePosition += vDispl
+		update()
+	# check and down displacement
+	elif ( vPiecePosition.y == 1 and  isFromClock and iStage == 1 ): # iStage prv value
+		pass
+	elif (bCheckFit(Vector2(0, 1))):
+		vDispl = Vector2(0,1)
+		vPiecePosition += vDispl
+		update()
+	else:
+		get_node("sounds").play("sound_shoot")
+		var i = 0
+		for cell in avBlockShapes[iPieceShape]:
+			var pos = vXformTransform(cell)
+			dCellsMap[pos] = sBlockMath[i]
+			i+=1
+		hitDict(checkHit())
+		newPiece()
+
+func pieceRotate():
+	if (! bCheckFit(Vector2(), 1)):
+		return
+	var advance = 1
+	iPieceRotate = (iPieceRotate + advance) % 4
+	update()
+
+func _ready():
+	seed(OS.get_system_time_secs())
+	randomize()
+#	get_node("../../mathWorld").Translation.set_locale("pt_BR")
+	btLanguage = get_node("../btLanguage")
+	btLanguage.add_item("English")
+	btLanguage.add_item("Português")
+	_on_btLanguage_item_selected(0)
+#	TranslationServer.set_locale("pt")
+	lbStage = get_node("../lbStage")
+	lbStage.set_text(tr("STAGE")+ str(iStage))
+	lbWow = get_node("lbWow")
+	lbScore = get_node("../lbScore")
+	timer = get_node("timer")
+	timer.set_wait_time(0.75)
+	timer.start()
+	timer.connect("timeout",self,"pieceMoveDown", [true])
+	get_node("../btRestart").set_text(tr("START"))
+	set_process_input(chkLock())
+
+# setup variables in function of game step
+func setupStage(iStage = 1):
+	if ( iStage == 1 ):
+		iWidth = 7
+		iHeight = 9
+		iMaxIdxMathSet = 14
+		iMaxShapes = 12
+		vUnitSize = Vector2(38,38)
+		# centralized the game
+		vOrigin = Vector2( get_viewport_rect().size.x / 2 - iWidth * vUnitSize.x / 2, 2*get_viewport_rect().size.y / 5 - iHeight * vUnitSize.y / 2 )
+		vStartPos = Vector2(0,0)
+		get_node("../lbScore").set_pos(Vector2(vOrigin.x,vOrigin.y-2*vUnitSize.y))
+		dIni = { 
+			Vector2(0,1) : '=', Vector2(2,1) : '+', Vector2(4,1) : '>', Vector2(6,1) : '<',
+			Vector2(0,5) : '+', 
+			Vector2(0,7) : '=',
+			Vector2(3,8) : '+', Vector2(5,8) : '='
+		}
+	else:
+		iWidth = 9
+		iHeight = 15
+		iMaxIdxMathSet = 14
+		iMaxShapes = 13
+		vUnitSize = Vector2(32,32)
+		vOrigin = Vector2(vUnitSize.x * 2, vUnitSize.y * 3)
+		get_node("../lbScore").set_pos(Vector2(vOrigin.x,vOrigin.y-2*vUnitSize.y))
+		dIni = { 
+			Vector2(0,0) : '>', Vector2(4,0) : '>', Vector2(6,0) : '<', Vector2(8,0) : '<',
+		   	Vector2(0,1) : '=', Vector2(1,1) : '+', Vector2(2,1) : '-', Vector2(6,1) : '*', Vector2(7,1) : '(', Vector2(8,1) : ')',
+			Vector2(8,5) : '=',
+			Vector2(0,7) : '=', Vector2(8,7) : '+',
+			Vector2(0,9) : '+', Vector2(8,9) : '-',
+			Vector2(0,11) : '=', Vector2(8,11) : '=',
+			Vector2(0,13) : ' ', Vector2(8,13) : ' ',
+			Vector2(0,14) : ' ', Vector2(1,14) : ' ', Vector2(3,14) : '+', Vector2(5,14) : '=', Vector2(7,14) : ' ', Vector2(8,14) : ' '
+		}
+	# after ifs Steps:
+	self.set_size(Vector2(iWidth, iHeight)*vUnitSize)
+	dCellsMap.clear()
+	# fill dCellsMap with empaty '$' and inis dictonaries
+	for y in range(iHeight):
+		for x in range(iWidth):
+			dCellsMap[Vector2(x,y)] = '$'
+			if ( dIni.has(Vector2(x,y)) ):
+				dCellsMap[Vector2(x,y)] = dIni[Vector2(x,y)]
+
+func vXformTransform(vc2CellInBlockShapes, iExtraRotate = 0):
+	var r = ( iExtraRotate + iPieceRotate) % 4
+#	print('Return vXformTransform: ', vPiecePosition + amvBlockRotations[r].xform(vc2CellInBlockShapes))
+	return vPiecePosition + amvBlockRotations[r].xform(vc2CellInBlockShapes)
+
+
+# --------------------------------------------   Algorithms ------------------------------------------------------
+
+# transform strings algorithm in a gd or c++ class ??????
+
+func solveRpn ( strRpn ):
+	var aux = 0
+	var stack = []
+	var aRpn = strRpn.split(' ',strRpn)
+	print( aRpn )
+	for i in range( aRpn.size() ):
+		if( aRpn[i].is_valid_integer() ):
+			stack.push_front( aRpn[i] )
+		# the minor signal '-' is acoplated at number
+		elif( aRpn[i] == '+' ):
+			aux = int(stack[1]) + int(stack[0])
+			stack.pop_front()
+			stack.pop_front()
+			stack.push_front( aux )
+		elif( aRpn[i] == '-' ):
+			aux = int(stack[1]) - int(stack[0])
+			stack.pop_front()
+			stack.pop_front()
+			stack.push_front( aux )
+		elif( aRpn[i] == '*'):
+			aux = int(stack[1]) * int(stack[0])
+			stack.pop_front()
+			stack.pop_front()
+			stack.push_front( aux )
+		elif( aRpn[i] == ' ' ):
+			continue
+	return int(stack[0])
+
+func isValidString( string ):
+	# the order in sOk is infexible, the operators must be greater then 12# position
+	var sOk = '0123456789 ()+-*_'
+	var amountOfNumber = 0
+	var iCountLeft = 0
+	var iCountRight = 0
+	if ( string.empty() ):
+		return false
+	if ( string.begins_with('*') or string.begins_with(')') ):
+		return false
+	if ( string.ends_with('*') or string.ends_with('(') ):
+		return false
+	for s in range(string.length()):
+#		print( string[s] )
+#		print (sOk.find(string[s]) )
+		# check if all values are on the set sOk
+		if ( sOk.find( string[s] ) == -1 ):
+#			print ('Is not permited: ', string[s], ' on position: ',s )
+			return false
+		# count numbers
+		if ( string[s].is_valid_integer() ):
+			amountOfNumber += 1
+		# check if there is correct order and number of pharentesis
+		if ( string[s] == '(' ):
+			iCountLeft += 1
+		if ( string[s] == ')' ):
+			iCountRight += 1
+		# if empty pharentesis return false
+		if ( string[s] == '(' and string[s] == ')' ):
+			return false
+		# at any time in expression the number of ')' must be minor or equal then '('
+		if ( iCountRight > iCountLeft ):
+			return false
+	for s in range(string.length() - 1):
+		# checks if there is two operators consecutives
+		if ( sOk.find(string[s]) > 12 and sOk.find(string[s+1]) > 12 ):
+			return false
+	# at the end of expression the number of pharentesis must be equal
+	if ( iCountLeft != iCountRight ):
+		return false
+	# if there is not numbers
+	if ( amountOfNumber == 0):
+		return false
+	return true
+
+# return a math expression string in Reverse Polish Notation separeted by ' '
+func sRpn( string ):
+	var sOutput = ''
+	var stack = [ ]
+	var sPrecedence = {  '+' : 1, '-' : 1, '*' : 2, '(' : 3 }
+	var nearLeft = true
+	# read a token.
+	for s in string:
+		# if the token is a number, then add it to the output queue.
+		if ( s.is_valid_integer() ):
+			sOutput += s 
+			if( ! stack.empty() and stack[0] == '(' ):
+				nearLeft = false
+		# if the token is an operator then:
+		elif ( s == '+' or s == '-' or s == '*' or s == '(' or s == ')' ):
+			# put the signal negative number '-' in output queue after '(' or discard the '+'
+			if( ! stack.empty() ):
+				if( s == '-' and sOutput != '' and stack[0] == '(' and nearLeft):
+					sOutput += ' '
+					sOutput += s
+					nearLeft = false
+					continue
+				if( s== '+' and sOutput != '' and stack[0] == '(' and nearLeft ):
+					nearLeft = false
+					continue
+			# if sOutput is '' and token is '+' or '-' then add it to the output
+			# this consider a valid integer negative or positive number, ie +5 or -3, it is ok!
+			if ( sOutput == '' and (s == '+' or s == '-') ):
+				if ( s == '-' ):
+					sOutput += s
+				continue
+			# if token is an operator then put ' ' in the queue to separate the terms
+			if ( s == '+' or s == '-' or s == '*'):
+				sOutput += ' '
+			# if the token is a left parenthesis or stack is empty, push it onto the stack.
+#			if( s == '(' ):
+#				sOutput += '_'
+			if (  stack.empty() or s == '(' ):
+				nearLeft = true
+				stack.push_front(s)
+				continue
+			# if the token is an operator different then '(' and stack is not empty
+			else:
+				# if token is ')' util the token at top of the stack is a '(' 
+				# pop operators off the stack onto output queue except '(' that only pop the stack
+				if ( s == ')' ):
+					while ( stack[0] != '(' ):
+						sOutput += ' '
+						sOutput += str(stack[0])
+						stack.pop_front()
+						continue
+					stack.pop_front()
+					continue
+				# If token is an operator
+				else:
+					# while there is an operator at the top of the stack and either...
+					while ( ! stack.empty() ):
+						# if 's' is left-associative and its precedence is less than or equal to stack[0]
+						if (  sPrecedence[s] <= sPrecedence[stack[0]] and stack[0] != '('):
+							# pop it off the stack onto the output queue
+							sOutput += str(stack[0])
+							sOutput += ' '
+							stack.pop_front()
+							continue
+						else:
+							break
+					# push 's' to stack
+					stack.push_front(s)
+	# After process still remain operators on stack, add they to outpu queue
+	if ( ! stack.empty() ) :
+		while ( ! stack.empty() ):
+			sOutput += ' '
+			sOutput += str(stack[0])
+			stack.pop_front()
+	return sOutput
+
+func eval( string):
+	if ( isValidString(string) ):
+		return solveRpn( sRpn( string ) ) 
+	else:
+		print( 'Invalid expression: ', string )
+		return null
+# -------------------------------------------------------------------------------------------------------------------
+
+# return a dictonary (dResult) where key are rows (>=0) and columns (<0) with vector of Vectors2(x,y) of the hit results
+func checkHit():
+	var a = 0
+	var b = 0
+	var sAux
+	var aAux = []
+	var asAux = []
+	var aavAux = []
+	var aavDef = []
+	var map = {}
+	var h = iHeight
+	var w = iWidth
+	dResult.clear()
+	# check and setup variables for row or collumn
+	for isRow in [true,false]:
+		if ( isRow ):
+			# copy dCellsMap to map
+			for y in range(iHeight):
+				for x in range(iWidth):
+					map[Vector2(x,y)] = dCellsMap[Vector2(x,y)]
+			h = iHeight
+			w = iWidth
+			a = 2
+			b = 0
+		else:
+			# transpose dCellsMap to map
+			map.clear()
+			for y in range(iHeight):
+				for x in range(iWidth):
+					map[Vector2(y,x)] = dCellsMap[Vector2(x,y)]
+			# invert order
+			h = iWidth
+			w = iHeight
+			a = 0
+			b = 2
+		# build a array of strings (asAux) which its contents with valid integers and operators separated by '='
+		# and build the correspondent array the vectors2 with x,y position in dCellsMap including '=' postion
+		for y in range(a, h):
+			sAux = ''
+			aAux.clear()
+			asAux.clear()
+			aavAux.clear()
+			for x in range(b, w):
+				if ( map[Vector2(x,y)] == '=' ):
+					if ( x > 0 ):
+						# if on sequence of two '=' put a empty string/vector to separate informations
+						if ( map[Vector2(x-1,y)] == '=' ):
+							asAux.append('')
+							aavAux.append([])
+							continue
+						# if the last char before '=' is the '+' or '-', delete it append sAux, aAux with 
+						#	a empty string/vector to separate informations
+						if ( map[Vector2(x-1,y)] == '+' or map[Vector2(x-1,y)] == '-' ):
+							sAux.erase(sAux.length()-1,1)
+							aAux.remove(aAux.size()-1)
+							asAux.append(sAux)
+							aavAux.append([] + aAux)
+							asAux.append('')
+							aavAux.append([])
+							sAux = ''
+							aAux.clear()
+							continue
+					# append string sAux but not '='
+					if ( sAux != ''):
+						asAux.append(sAux)
+						aavAux.append([] + aAux)
+						sAux = ''
+						aAux.clear()
+				elif ( map[Vector2(x,y)] == '$' or map[Vector2(x,y)] == ' ' or map[Vector2(x,y)] == '<' or map[Vector2(x,y)] == '>' ):
+					# appends string sAux, if exists, to asAux when find a '$' or ' '
+					if ( sAux != ''):
+						asAux.append(sAux)
+						aavAux.append([] + aAux)
+						sAux = ''
+						aAux.clear()
+					# put a empty string to separate 
+					asAux.append('')
+					aavAux.append([])
+				else:
+					# if it is not '=' or '$' or ' ' load sAux and append aavAux
+					sAux += map[Vector2(x,y)]
+					aAux.append(Vector2(x,y))
+			# at the end of x search if exists sAux append it
+			if (sAux != '' ):
+				if ( map[Vector2(w-1,y)] == '+' or map[Vector2(w-1,y)] == '-' ):
+							sAux.erase(sAux.length()-1,1)
+							aAux.remove(aAux.size()-1)
+							asAux.append(sAux)
+							aavAux.append([] + aAux)
+				else:
+					asAux.append(sAux)
+					aavAux.append([] + aAux)
+			print ( asAux )
+			# scanning asAux where asAxu[i] are strings of the math expression
+			aavDef.clear()
+			for i in range(0,asAux.size()-1):
+				if (asAux.size() > 0 ):
+					# if not of two strings are null
+					if (! (asAux[i] == '' or asAux[i+1] == '') ):
+						# check hit between asAux strings
+#						if (iGetResult(asAux[i]) == iGetResult(asAux[i+1])):
+#						if (evaluate(asAux[i]) == evaluate(asAux[i+1])):
+						if (eval(asAux[i]) == eval(asAux[i+1]) and eval(asAux[i]) != null ):
+							# put in vectors Def only vectors positions of equations hit
+							aavDef.append(aavAux[i])
+							aavDef.append(aavAux[i+1])
+							# adds a Vector2 in aavAux one position after the last Vector2 in aavAux[i]
+							var j = aavDef.size() - 2
+							var a = []
+							a.append(Vector2(aavDef[j][0].x + aavDef[j].size(),y))
+							# insert ´=' position betwen vectors
+							aavDef.insert(j+1,[]+a)
+							a.clear()
+				# build 'aux' copied from aavAux without inner vectors and repetitons
+				var avAux = []
+				var avAuxVert = []
+				avAux.clear()
+				avAuxVert.clear()
+				# remove inner vectors in aavDef and append it in avAux
+				for vec in aavDef:
+					for v2 in vec:
+						avAux.append(v2)
+				# delete the repetitons
+				for i in range(avAux.size()-2,-1,-1):
+					if ( avAux[i] == avAux[i+1] ):
+						avAux.remove(i+1)
+				# put avAux in dResult 0 to n to rows and -1 to -n-1 to columns
+				if ( ! avAux.empty() ):
+					if (isRow):
+						dResult[y] = [] + avAux
+					else:
+						for v in avAux:
+							avAuxVert.append(Vector2(y,v.x))
+							dResult[-y-1] = [] + avAuxVert
+	print ( 'dResul: ', dResult )
+	return dResult
+
+#func evaluate(sInput):
+#	var script = GDScript.new()
+#	script.set_source_code("func eval():\n\treturn " + sInput)
+#	script.reload()
+#	var obj = Reference.new()	
+#	obj.set_script(script)
+#	print( obj.eval() )
+#	return obj.eval()
+
+# study this function, refactor, clean and comment it
+func hitDict( dHit ):
+#	printDict(dCellsMap, iHeight, iWidth)
+	if ( dHit.empty() ):
+		return
+	var t = timer.get_wait_time()
+	timer.disconnect( "timeout",self,"pieceMoveDown" )	
+#	var textBbcode = 'Goooood!!!!\n\n'
+	var points = 0
+	points += (dHit.size()+1)/2
+	for i in dHit.keys() :
+		timer.set_wait_time(0.25)
+		# do the dResult in dCellsMap blinks before it explodes
+		for v in dHit[i]:			
+			yield(timer,"timeout")
+			if ( bHit ):
+				bHit = false 
+			else:
+				bHit = true
+			update()
+#		var aux = ''
+		# read dCellsMap value from dHit[i] Vector2 values
+#		for v2 in dHit[i]:
+#			aux += str(dCellsMap[v2])
+#		textBbcode += aux
+#		if ( dHit.size() > 1 ):
+#			textBbcode += '\nand\n'
+		# call delLine that dell line 'i' on dCellsMap and move all others cells to down
+		if ( i >= 0 ):
+			delLine(i)
+		else:
+			delColumn(i)
+	bHit = false
+	timer.set_wait_time(t)
+#	yield(timer,"timeout")
+	timer.connect( "timeout",self,"pieceMoveDown", [true] )
+#	timer.start()
+#	bOnPause = false
+
+func iGetResult(s):
+	var res = 0
+	var sAux = ''
+	for i in range(s.length()):
+		sAux += str(s[i])
+		if (! sAux.is_valid_integer()):
+			# sum sAux except the last char
+			res += int(sAux.substr(0,sAux.length()-1))
+			# set sAux with the last char
+			sAux = sAux.substr(sAux.length()-1,1)
+	if ( sAux != '+' or sAux != '-' ):
+		res += int(sAux)
+	return res
+
+func printDict(map,h,w):
+	var vect = []
+	for y in range(h):
+		for x in range(w):
+			if ( Vector2(x,y) in map):
+				vect.append(map[Vector2(x,y)])
+		print(vect)
+		vect.clear()
+
+
+

@@ -1,0 +1,38 @@
+,en,pt
+GREET_1,W O W !,U A L !
+GREET_2,G R E A T !,G R A N D E !
+GREET_3,G O O D !,Ó T I M O !
+PAUSE,P A U S E,P A U S A R
+MOVE,M O V E,M O V E R
+SCORE,SCORE: ,PONTOS: 
+RESTART,RESTART,REINICIAR
+STAGE,S T A G E: ,F A S E: 
+NO_MOVE,NOT MOVE,NÃO MOVE
+START,START,INICIAR
+STAGE_1, THE NUMBERS , OS NÚMEROS
+STAGE_2, THE ROMAN,ROMANOS
+STAGE_3, THE ADDITION , A ADIÇÃO
+STAGE_4, THE SUBCTRATION, A SUBTRAÇÃO
+STAGE_5, THE ADDITION AND SUBCTRATION, A ADIÇÃO E SUBTRAÇÃO
+STAGE_6, THE MULTIPLICATION, A MULTIPLICAÇÃO
+STAGE_7,THE INTEGER DIVISION,DIVISÃO DE INTEIROS
+STAGE_8,THE FRACTIONS,FRAÇÕES
+STAGE_9,THE REST OF DIVISION,RESTO DE UMA DIVISÃO
+STAGE_10, THE MIX: + - *, MISTURANDO: + - *
+STAGE_11, THE MIX: + - *(), MISTURANDO: + - *()
+STAGE_12, THE MIX: + - * / (), MISTURANDO: + - * / ()
+STAGE_13, THE MIX: + - * / % (), MISTURANDO: + - * / % ()
+NOTES_1,"In this stage you need to compare equals numbers, put they in any order on side of the = signal","Nesta fase você precisa comparar números iguais, coloque-os em qualquer ordem ao lado do sinal de igual"
+NOTES_2,"In this stage you need to compare equals arabic and roman numbers, put they in any order on side of the = signal",Nesta fase você deve comparar iguais números arábicos com os respectivos algarismos romanos. Coloqueo-os em qualqur ordem ao lado do sinal de igual
+NOTES_3,Now you must hit the sum operation,Agora você deve resolver as somas
+NOTES_4,Now you must hit the subtraction operation,Agora você deve resolver as subtrações
+NOTES_5,In this stage you must hit the sum and subtraction operations,Agora use as operações de soma e subtração
+NOTES_6,Now you must hit the multiplication operation,Agore use a multiplicação
+NOTES_7,"Now you must hit the integer division operation, only integer part is preserved","Agora faça a divisão de inteiros, o resto será descartado e só a parte inteira será preservada"
+NOTES_8,"Now you must hit the true division operation, only fractions can be compared","Agora a divisão é real, apenas frações podem ser comparadas"
+NOTES_9,Now you must hit the rest of the division operation,Agora encontre o resto das divisões
+NOTES_10,"Now you must hit the sum, subtraction and multiplication operations, the multilication has precedence","Agora acerte usando as operações de soma, subtração e multiplicação, a multipilcação tem precedência"
+NOTES_11,"Now you must hit the sum, subtraction and multiplication operations and the parenthesis can be used","Agora acerte usando as operações de soma, subtração e multiplicação, os parêntesis podem ser utilizados"
+NOTES_12,"Now you must hit the sum, subtraction, multiplication and integer division operations and the parenthesis can be used","Agora acerte usando as operações de soma, subtração, multiplicação e divisão de inteiros, os parêntesis podem ser utilizados"
+NOTES_13,"Now you must hit the sum, subtraction, multiplication, integer division and rest division operations and the parenthesis can be used","Agora acerte usando as operações de soma, subtração, multiplicação, divisão de inteiros e resto da divisão, os parêntesis podem ser utilizados"
+NOTES_0,Arrow keys move.    Arrow up explode.    Space bar rotate active piece or explode the last piece and that it touched,Setas movem   Para cima explodem   Espaço gira a peça ativa ou explode a útima peça e aque ela tocou
