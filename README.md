@@ -17,11 +17,13 @@
 > - The initial page contains the basic instructions for the game. (see layouts below)
 > - In the first row, a randomly generated number moves horizontally.
 > - In the second line, the above quoted number can be changed for some of the symbols or it can be added or subtracted by one in the symbols '>' and '<' respectively. (Play! It is very intuitive and fun.)
-> - When you hit an equation it explodes your numbers and the points are added to the score.
+> - Attention: two numbers can be rarely generated, in this case one of them will always be mutable and the other fixed.
+> - When you hit an equation it explodes its numbers and symbols and the points are added to the score.
 > - When you explode single numbers, points are subtracted from the score.
 > - At any time you can change the direction of the active number.
 > - When the number collides with any boundary it sticks to it.
 > - You can speed up the speed of the number by pointing it in the same direction.
+> - You can move the number step by step by pressing the pause button.
 > - Any comparison or equality can be done in the horizontal or vertical direction.
 > - At any time, you can change the level up '<<' or down '>>', pause or move and restart the application.
 > - The degree of complexity of each level is increasing, the examples below (layouts) are the initial steps and are easy to solve.
@@ -35,7 +37,7 @@
 > - 6. Solve the multiplication of two integers.
 > - 7. Solve the division of two integers.
 > - 8. Comparing fractions.
-> - 9. Solve the rest of integer division.
+> - 9. Solve the rest of integer division with zero rest.
 > - 10. Solve the mix of adding, subtracting and multiplying operations.
 > - 11. Same as above but you can use parentheses.
 > - 12. Solve the mix of addition, subtraction, multiplication and division operations, you can use parentheses.
@@ -84,13 +86,25 @@
 > - The equality '1 = 5 % 2' will explode in the next second and the points will be added to the scoreboard. Note that equations can also be vertical. In this case 5 divided by 2 equals 2 with remainder 1,the remainder (rest) is our target in this level.  
 > ![initial page](./readmeImages/level_9_en.gif) 
 
-> ## Typical level 10 - Solving additions, subtractions an multiplications.
+> ## Typical level 10 - Solving additions, subtractions and multiplications.
 > - The equality '5 * 4 = 7 + 7 + 7 - 1' will explode in the next second and the points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background.  
 > ![initial page](./readmeImages/level_10_en.gif) 
 
+> ## Typical level 10 in Portuguese - Solving additions, subtractions and multiplications.
+> - The equality '9 = 4 * 2 + 1' will explode in the next second and the points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background. This example is in Portuguese.  
+> ![initial page](./readmeImages/level_10_pt.gif) 
 
+> ## Typical level 11 - Solving additions, subtractions and multiplications with parentheses.
+> - The equality '7 * 7 = 7 * ( 4 + 3 )' will explode in the next second and points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background.     
+> ![initial page](./readmeImages/level_11_en.gif) 
 
+> ## Typical level 12 - Solving additions, subtractions, multiplications and divisions with parentheses.
+> - The equality '( 2 + 4 + 4 ) / 2 = 5' will explode in the next second and points will be added to the scoreboard.    
+> ![initial page](./readmeImages/level_12_en.gif)  
 
+> ## Typical level 13 - Solving additions, subtractions, multiplications,  divisions and rest of divisions with parentheses.
+> - The equality '8 = 9 % 2 + 9 - 12 / 6' will explode in the next second and points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background.      
+> ![initial page](./readmeImages/level_13_en.gif) 
 
 
 # Models
