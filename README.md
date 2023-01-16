@@ -1,5 +1,5 @@
 # **Tetris Math**
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/softpva/factorizeBarrels)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/softpva/tetrisMath)
 [![pt-br](https://img.shields.io/badge/lang-pt--br-green.svg)](./README.pt-br.md)
 [![es](https://img.shields.io/badge/lang-es-yellow.svg)](./README.es.md)
   
@@ -11,7 +11,7 @@
 > [![NPM](https://img.shields.io/npm/l/react)](./LICENSE) 
 
 # Features
-> - The game will be fully refactored and few bugs will be fixed.
+> - The game will be fully refactored and some few bugs will be fixed.
 > - The game can be played in English or Portuguese.
 > - In development mode you can set the starting score or skip to any level.
 > - The initial page contains the basic instructions for the game. (see layouts below)
@@ -47,7 +47,7 @@
 
 # Layouts
 > ## The homepage with basic instructions.  
-> - The editable labels 'fixed score' and 'stage' are only present in development mode. Through them you can jump to different levels or set a starting score.  
+> - The fields 'fixed score' and 'stage' are only present in development mode. Through them you can jump to different levels or set a starting score. This is the place to set language to English or Portuguese.    
 > ![initial page](./readmeImages/homepage_en.gif)  
 
 > ## Typical level 1 - comparing two numbers 
@@ -59,7 +59,7 @@
 > ![initial page](./readmeImages/level_2_en.gif)  
 
 > ## Typical level 3 - Solving additions 
-> - The equality '7 = 1 + 6' will explode in the next second and the points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background.(this is general behavior)  
+> - The equality '7 = 1 + 6' will explode in the next second and the points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background.(this is general behavior). Note that the number one walking left-right on the first line, use the down arrow to use correctly it in the game.  
 > ![initial page](./readmeImages/level_3_en.gif) 
 
 > ## Typical level 4 - Solving subtractions 
@@ -78,12 +78,12 @@
 > - The equality '6 / 2 = 3' will explode in the next second and the points will be added to the scoreboard. Note that equations can also be vertical.  
 > ![initial page](./readmeImages/level_7_en.gif)  
 
-> ## Typical level 8 - comparing two fractions
+> ## Typical level 8 - Comparing two fractions
 > - The equality '1 / 2 = 4 / 8' will explode in the next second and points will be added to the scoreboard.   
 > ![initial page](./readmeImages/level_8_en.gif)  
 
 > ## Typical level 9 - Solving rest of divisions.
-> - The equality '1 = 5 % 2' will explode in the next second and the points will be added to the scoreboard. Note that equations can also be vertical. In this case 5 divided by 2 equals 2 with remainder 1,the remainder (rest) is our target in this level.  
+> - The equality '1 = 5 % 2' will explode in the next second and the points will be added to the scoreboard. Note that equations can also be vertical. In this case 5 divided by 2 equals 2 with remainder 1, the remainder (rest) is the value that we wish to calculate with the '%' operator.   
 > ![initial page](./readmeImages/level_9_en.gif) 
 
 > ## Typical level 10 - Solving additions, subtractions and multiplications.
@@ -91,7 +91,7 @@
 > ![initial page](./readmeImages/level_10_en.gif) 
 
 > ## Typical level 10 in Portuguese - Solving additions, subtractions and multiplications.
-> - The equality '9 = 4 * 2 + 1' will explode in the next second and the points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background. This example is in Portuguese.  
+> - The equality '9 = 4 * 2 + 1' will explode in the next second and the points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background. This example is in Portuguese. (choose language on homepage)  
 > ![initial page](./readmeImages/level_10_pt.gif) 
 
 > ## Typical level 11 - Solving additions, subtractions and multiplications with parentheses.
@@ -103,7 +103,7 @@
 > ![initial page](./readmeImages/level_12_en.gif)  
 
 > ## Typical level 13 - Solving additions, subtractions, multiplications,  divisions and rest of divisions with parentheses.
-> - The equality '8 = 9 % 2 + 9 - 12 / 6' will explode in the next second and points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background.      
+> - The equality '8 = 9 % 2 + 9 - 12 / 6' will explode in the next second and points will be added to the scoreboard. This equation flashes and changes color before exploding, so its numbers are red on a white background. Note the precedence of operators resolve in this order: () * / % + -        
 > ![initial page](./readmeImages/level_13_en.gif) 
 
 
